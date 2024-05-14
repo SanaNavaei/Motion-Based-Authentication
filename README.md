@@ -1,1 +1,1 @@
-# Motion-Based-Authentication
+# Motion Based Authentication
