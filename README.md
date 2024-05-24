@@ -169,3 +169,18 @@ If the authentication pattern matches the primary pattern, the following message
    <img src="assets/AuthSuccess1.jpg" alt="AuthSuccess1" width="300">
    <img src="assets/AuthSuccess2.jpg" alt="AuthSuccess2" width="300">
 </div>
+
+## References
+- [Qt Documentation](https://doc.qt.io/qt-6/index.html)
+- [Qt Quick Documentation](https://doc.qt.io/qt-6/qtquick-index.html)
+- [Qt Sensors Documentation](https://doc.qt.io/qt-6/qtsensors-index.html)
+- [Kalman Filter in Sensor Fusion](https://www.intechopen.com/chapters/49967)
+- [Sensor Fusion in Android](https://developer.android.com/guide/topics/sensors/sensors_overview)
+- [Perfetto Profiling Tool](https://perfetto.dev/docs/)
+- [Perfetto Android Quick Start](https://perfetto.dev/docs/quickstart/android-tracing)
+
+## Contributors
+- [Nesa Abbasi](https://github.com/Nesabbasi): UI Design and Front-end of mobile application, Perfetto Profiling
+- [Hadi Babalou](https://github.com/Hadi-loo): Back-end of mobile application, Logic of mobile application
+- [Sana Navaei](https://github.com/SanaNavaei): UI Design and Front-end of mobile application, Documentation
+- [Ava Mirmohammadmahdi](https://github.com/avamirm): Back-end of mobile application, Perfetto Profiling
