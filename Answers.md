@@ -1,5 +1,63 @@
 # Questions and Answers
 
+Perfetto is a powerful tracing tool that allows developers to collect detailed system-level performance data from Android devices. By using Perfetto, developers can analyze system behavior, identify performance bottlenecks, and optimize their applications for better efficiency and responsiveness. In this section, we will explore some key questions related to system-level performance analysis using Perfetto and sensor data processing in Android applications.
+
+### 1. What happens at the operating system level from the time a request is made to read data from a sensor until the data is obtained And how much time has passed?
+
+The Sensors Hardware Abstraction Layer (HAL) is the interface between the Android sensor framework and a device's sensors, such as an accelerometer or gyroscope. The Sensors HAL defines the functions that must be implemented to allow the framework to control the sensors. As you can see in the following image, the sensor sends a request at 00:00:06.1428 and the data is obtained at 00:00:06.1462, so the time passed is 3ms. We also see from the system log that "Recording Accelerometer" starts at 00:00:04.775 and receives the sensor data at 00:00:05.889, so the time passed is 1.114s. At the operating system level, when a request is made to read data from a sensor, the request first goes through the Android sensor framework, which communicates with the Sensors HAL. The HAL interacts with the sensor hardware to retrieve the requested data. Once the data is ready, it is passed back through the HAL to the sensor framework, and then to the application that made the request. This entire process includes initial setup, configuration, actual data retrieval, and the eventual delivery of data to the application. The logs indicate the efficiency of the HAL and the sensor framework in processing these requests within the mentioned time frames.
+
+![readData](assets/readData.png "readData")
+
+Operating System Layer:
+
+- Sensor Manager: The application requests sensor data (accelerometer and gyroscope) through the Android SensorManager.
+
+- Sensor HAL (Hardware Abstraction Layer): The SensorManager communicates with the Hardware Abstraction Layer (HAL). The HAL acts as a bridge between the app and the actual sensor hardware.
+
+- Sensor Driver: The HAL interacts with the specific sensor driver for the accelerometer and gyroscope. This driver controls the sensor hardware and translates low-level signals into a format the OS understands.
+
+- Delivery to SensorManager: The sensor driver delivers the processed sensor data back to the SensorManager.
+
+Delivery to App:
+
+- SensorEventListener: The application implements a SensorEventListener that receives notifications when new sensor data is available.
+
+- onSensorChanged: The SensorManager calls the app's onSensorChanged method within the SensorEventListener, passing the latest sensor data.
+
+This is the result of what happend at Operating System level:
+
+![sensor_HAL](assets/sensor_HAL.png "sensor_HAL")
+
+### 2. Compare the time between reading two consecutive data from the sensor in Perfetto with the sampling period that you have configured in your code.
+
+As we can see in the following image, the sensors HAL sample period is adjusted to 200ms based on max delays. However, we see in the previous question that it takes 3ms to read two data from the sensor. The sampling rate is configured to 50ms in our code which we can see it in the image. So the time between reading two consecutive data from the sensor in Perfetto is less than the sampling period that we have configured in our code. This is because the sensors HAL is a hardware sensor and it is faster than the software sensor that we have implemented. Additionally, the actual intervals observed in the Perfetto logs, which range from 46 to 58 milliseconds, indicate that despite the configured sampling period of 50 milliseconds, the hardware sensor's efficiency and the Android system's internal optimizations allow for faster data collection. If the time difference between the two successive readings in the Perfetto trace matches or is close to the expected interval of 50 milliseconds, it indicates that the sensor data is being captured at the expected data rate. Any significant deviation from the expected interval could indicate variations in the sensor data capture process, such as missed readings or irregular timing.
+
+Note that as the [Qt Documentation](https://doc.qt.io/qt-6/qsensor.html#dataRate-prop) mentioned, there is no mechanism to determine the current data rate in use by the platform.
+
+![timeComparison](assets/timeComparison.png "timeComparison")
+
+### 3. Does the expectation of busy waiting thread until another thread finishes its work in system calls conflict with processing, such as using the graphics library and updating sensors? Justify your answer.
+
+Busy waiting is a technique where a thread repeatedly checks for a condition to be true, without performing any other useful work. This can be inefficient and resource-intensive, as the thread consumes CPU cycles while waiting for the condition to be met. In the context of system calls, busy waiting can lead to high CPU utilization and reduced performance, as the thread is constantly checking for the completion of another thread's work.
+
+When multiple threads are involved in processing tasks like using a graphics library and updating sensors, conflicts can arise due to shared resources, such as memory, CPU time, and I/O operations. For example, if a thread is busy waiting for another thread to finish updating sensor data, it may prevent the graphics library from accessing the required resources, leading to delays or resource contention. So, yes, there can be conflicts in system calls between processes.
+
+Reasons Why Conflicts Might Be Mitigated:
+
+- Sensor Event Queues: Android uses sensor event queues. The sensor data isn't delivered directly to your app when requested. Instead, the sensor driver places the data in a queue. Your app's onSensorChanged method is called only when new data arrives in the queue, minimizing CPU usage by your app for waiting.
+
+- Non-Blocking I/O: Modern operating systems often employ non-blocking I/O for sensor access. This means your app doesn't block (busy wait) waiting for sensor data. Instead, the OS can notify your app when new data is available in the queue. This allows other processes to run uninterrupted.
+
+- Thread Priorities: The OS typically assigns priorities to threads. Sensor update threads might have a lower priority than graphics libraries, reducing the chance of priority inversion impacting performance.
+
+![conflict](assets/conflict.png "conflict")
+
+### 4. Compare the processing time required for sensor data with the time of other CPU processes.
+
+Sensor data processing typically takes a much shorter time compared to other CPU processing tasks in mobile applications. It is a relatively lightweight task compared to most other CPU processing requirements in mobile applications. This makes it suitable for real-time applications like motion-based authentication in your case. By using Perfetto, you can identify any bottlenecks in your sensor data processing code and ensure it remains efficient. Sensor data processing involves relatively simple calculations on small data packets, such as filtering and scaling raw sensor readings from accelerometers and gyroscopes. This simplicity, along with optimized libraries provided by the Android framework and sensor vendors, ensures efficient and swift processing. On the other hand, tasks like graphics rendering, video processing, complex computational tasks, and network communication demand more from the CPU. Graphics rendering, for instance, entails intricate 3D manipulations and lighting effects, while video processing involves decompressing and manipulating frames. Complex calculations in scientific simulations or machine learning algorithms also tax the CPU. Network communication, though not always intensive, can include processing tasks like protocol parsing and encryption. Despite the variability in sensor complexity and filtering algorithms, sensor data processing remains generally faster due to its focused nature. Perfetto, a powerful tracing tool, aids in optimizing sensor data processing by identifying bottlenecks, ensuring efficient real-time performance for tasks like motion-based authentication. This highlights the importance of efficient sensor data handling in mobile applications, contributing to smoother user experiences and timely responses.
+
+![QSensor](assets/QSensor.png "QSensor")
+
 ### What is the best interval for reading accelerometer and gyroscope sensor values?
 The ideal interval for reading accelerometer and gyroscope sensor values depends on a delicate balance between accuracy, power consumption, and processing power. Experimentation and testing are often necessary to determine the most suitable interval for a specific project's requirements. In our project, we've chosen a 50ms interval for reading both the gyroscope and accelerometer sensor values, which has yielded acceptable results. This value can be considered a suitable interval for our project, balancing the need for accuracy with considerations for power consumption and resource efficiency.
 
